@@ -7,7 +7,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.NumberFormat;
@@ -71,7 +70,7 @@ public class RequestExtractor {
             if (!inputDirectory.exists()){
                 //System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("The directory that should hold the requests \\requests does not exist");
-                System.out.println("Looking for: " + System.getProperty("user.dir") + "\\requests\\" );
+                System.out.println("Looking for: " + System.getProperty("user.dir") + "\\files\\requests\\" );
             } else {
                 checkDirectoryExists(System.getProperty("user.dir") + "\\files\\sql\\");
                 File sqlOutputFile = new File(outputDirectory + "\\sql\\" + currentDate + "_sqlScript.sql");
@@ -93,12 +92,12 @@ public class RequestExtractor {
                                 successfulProcessedFiles.add(currentFile);
                                 checkDirectoryExists(System.getProperty("user.dir") + "\\files\\done\\");
                                 //fixme temporarily removed
-                                //copyFile(currentFile,System.getProperty("user.dir") + "\\files\\done\\" + currentDate);
+                                copyFile(currentFile,System.getProperty("user.dir") + "\\files\\done\\" + currentDate);
                             } else {
                                 erroredFiles.add(currentFile);
                                 checkDirectoryExists(System.getProperty("user.dir") + "\\files\\error\\");
                                 //fixme temporarily removed
-                                // copyFile(currentFile,System.getProperty("user.dir") + "\\files\\error\\" + currentDate);
+                                copyFile(currentFile,System.getProperty("user.dir") + "\\files\\error\\" + currentDate);
                                 RequestReport m = new RequestReport();
                                 m.setUsername("-");
                                 m.setPassword("-");
@@ -118,12 +117,10 @@ public class RequestExtractor {
                         if (files.endsWith(".xlsm") || files.endsWith(".XLSM")) {
                             File currentFile = listOfFiles[i];
                             //fixme temporarily removed next line
-                            //currentFile.delete(); //removes this file from the original source location
+                            currentFile.delete(); //removes this file from the original source location
                         }
                     }
                 }
-                
-
                 if (numberOfEncounteredFiles == 0){
                     //System.setOut(System.out);
                     System.out.println("Nothing to do! No TIMS request files encountered");
@@ -642,7 +639,6 @@ public class RequestExtractor {
 
 
         String requestCodeCellValue = (row.getCell(COLUMN_HEADERS.REQUEST_CODE.ordinal()).getStringCellValue());
-
         if (requestCodeCellValue.equals(REQUEST_ACTION.ADDUSER.toString())) {
             request.setRequestAction(REQUEST_ACTION.ADDUSER);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.ADDUSERACCESS.toString())) {
