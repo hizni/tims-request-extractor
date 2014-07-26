@@ -50,9 +50,10 @@ public class RequestReport {
         //StringBuilder manifest = new StringBuilder("");
         switch (da.CheckUserExistByTimsInternal(request.getTimsInternalID())){
             case 0:
-                switch (da.CheckUserExistByBadge(request.getSecurityBadge())) {
-                    case 0:
-                        switch (da.CheckUserExistByName(request.getSurname(), request.getForename())) {
+                //no
+                //switch (da.CheckUserExistByBadge(request.getSecurityBadge())) {
+                //    case 0:
+                        switch (da.CheckUserExistByName(request.getSQLFriendlySurname(), request.getSQLFriendlyForename())) {
                             case 0:
                                 //manifest.append("Brand new user.");
                                 setDetail("Brand new user");
@@ -71,20 +72,20 @@ public class RequestReport {
                                 setDetail("Error: Too many users encountered with same names!");
                                 setGenerateSQL(false);
                                 break;
-                         }
-                        break;
-                    case 1:
-                        //manifest.append("User already exists on TIMS (matched on security badge number) - ").append(request.getForename()).append(" ").append(request.getSurname().toUpperCase());
-                        setDetail("User aleady exists on TIMS (matched on security badge number)");
-                        setAlreadyExist(true);
-                        setGenerateSQL(true);
-                        break;
-                    default:
+                //         }
+                //        break;
+                //    case 1:
+                //        //manifest.append("User already exists on TIMS (matched on security badge number) - ").append(request.getForename()).append(" ").append(request.getSurname().toUpperCase());
+                //        setDetail("User aleady exists on TIMS (matched on security badge number)");
+                //        setAlreadyExist(true);
+                //        setGenerateSQL(true);
+                //        break;
+                //    default:
                         //manifest.append("Error: Too many users encountered with same security badge number: - ").append(request.getSecurityBadge());
-                        getRequest().setRequestingLocation(LOCATIONS.UNKNOWN);
-                        setDetail("Error! Too many users encountered with same security badge number - " + request.getSecurityBadge());
-                        setGenerateSQL(false);
-                        break;
+                //        getRequest().setRequestingLocation(LOCATIONS.UNKNOWN);
+                //        setDetail("Error! Too many users encountered with same security badge number - " + request.getSecurityBadge());
+                //        setGenerateSQL(false);
+                //        break;
                 }
                 break;
             case 1:
@@ -92,6 +93,7 @@ public class RequestReport {
                 setDetail("A user already exists on TIMS (matched on TIMS staff ID)");
                 getRequest().setRequestingLocation(LOCATIONS.UNKNOWN);
                 setAlreadyExist(true);
+
                 //setGenerateSQL(false);
                 setGenerateSQL(true);
                 break;

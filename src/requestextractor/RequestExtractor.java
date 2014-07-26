@@ -5,6 +5,19 @@ package requestextractor;/*
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
+import org.apache.commons.lang3.text.WordUtils;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,21 +30,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.apache.commons.lang3.text.WordUtils;
-import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 
 
 /**
@@ -139,7 +137,7 @@ public class RequestExtractor {
     }
 
     private static void CreateRequestReportDocument(ListMultimap<LOCATIONS, RequestReport> requestReportListWithRequestingLocation) {
-        String fileName = System.getProperty("user.dir") + "\\timsRequestTemplate.docx";
+        String fileName = System.getProperty("user.dir") + "\\files\\templates\\timsRequestTemplate.docx";
 
         POIFSFileSystem fs = null;
         FileOutputStream fos = null;
@@ -230,7 +228,7 @@ public class RequestExtractor {
                         }
                         
                     }
-                    fos = new FileOutputStream(System.getProperty("user.dir") + "\\output\\requestReport\\timsRequests_" + currentLocation + "_" + currentDate + ".docx");
+                    fos = new FileOutputStream(System.getProperty("user.dir") + "\\files\\output\\requestReport\\timsRequests_" + currentLocation + "_" + currentDate + ".docx");
                     doc.write(fos);
                     fos.flush();
                     fos.close();
@@ -379,7 +377,7 @@ public class RequestExtractor {
                     if (headerFound && correctVersion) {
                         //System.setOut(scriptOut);
                         Request r = populateRequestObject(row);  //shreds request row into Request object
-                        if (r != null && !r.getRequestAction().toString().equals(REQUEST_ACTION.NONE.toString()) ) { //check will only consider rows that contain data. Validation rules defined in Request class
+                        if ((r != null) && (!r.getRequestAction().equals(REQUEST_ACTION.NONE.toString()))) { //check will only consider rows that contain data. Validation rules defined in Request class
 
                             //creates a RequestReport object for each row. Also performs a check against the database for existing records
                             RequestReport man = new RequestReport(r.getRequestAction(), r, da);
@@ -484,8 +482,6 @@ public class RequestExtractor {
                                         man.setDetail("Resetting password as requested.");
                                     }
                                 }//end of reset password for existing account
-
-                                
                                 gen.StartTransaction();
 
                                 if (r.isAddNewAccount()) {
@@ -632,36 +628,44 @@ public class RequestExtractor {
         nf.setParseIntegerOnly(true);
         nf.setGroupingUsed(false);
 
-        Iterator cells = row.cellIterator();
-
-        boolean requestFound = false;
         //check that the content of the first cell is blank.
 
 
         String requestCodeCellValue = (row.getCell(COLUMN_HEADERS.REQUEST_CODE.ordinal()).getStringCellValue());
         if (requestCodeCellValue.equals(REQUEST_ACTION.ADDUSER.toString())) {
             request.setRequestAction(REQUEST_ACTION.ADDUSER);
+            request.setAddNewAccount(true);
+
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.ADDUSERACCESS.toString())) {
             request.setRequestAction(REQUEST_ACTION.ADDUSERACCESS);
+            request.setAddNewAccount(true);
+            request.setNewPasswordNeeded(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.AMEND.toString())) {
             request.setRequestAction(REQUEST_ACTION.AMEND);
+            request.setEditExistingAccount(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.CHANGEACCESS.toString())) {
             request.setRequestAction(REQUEST_ACTION.CHANGEACCESS);
+            request.setEditExistingAccount(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.GRANTEXISTACCESS.toString())) {
             request.setRequestAction(REQUEST_ACTION.GRANTEXISTACCESS);
+            request.setNewPasswordNeeded(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.REMOVEACCESS.toString())) {
             request.setRequestAction(REQUEST_ACTION.REMOVEACCESS);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.REMOVEUSER.toString())) {
             request.setRequestAction(REQUEST_ACTION.REMOVEUSER);
+            request.setRemoveExistingAccount(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.RESETPWD.toString())) {
             request.setRequestAction(REQUEST_ACTION.RESETPWD);
+            request.setResetPassword(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.NONE.toString())) {
             request.setRequestAction(REQUEST_ACTION.NONE);
         } else {
             System.out.println("....unknown request action selected. [FAIL]");
+            request.setRequestAction(REQUEST_ACTION.NONE);
         }
 
-        if (request.getRequestAction() != REQUEST_ACTION.NONE || request.getRequestAction() != null) {
+        if (request.getRequestAction().equals(REQUEST_ACTION.NONE)) {request = null; }
+        else {
             request.setProfession_code(row.getCell(COLUMN_HEADERS.PROFESSION_CODE.ordinal()).getStringCellValue());
             request.setSpecialty_code(nf.format(row.getCell(COLUMN_HEADERS.SPECIALTY_CODE.ordinal()).getNumericCellValue()));
 
@@ -684,7 +688,6 @@ public class RequestExtractor {
             } else {
                 request.setTitle(titleCellValue);
             }
-
             request.setForename(WordUtils.capitalizeFully(row.getCell(COLUMN_HEADERS.FORENAME.ordinal()).getStringCellValue()));
             request.setSurname(WordUtils.capitalizeFully(row.getCell(COLUMN_HEADERS.SURNAME.ordinal()).getStringCellValue()));
             request.setTimsInternalID(nf.format(row.getCell(COLUMN_HEADERS.SECURITY_BADGE_ID.ordinal()).getNumericCellValue()));
@@ -713,84 +716,84 @@ public class RequestExtractor {
             }
 
             Cell surgeonProfessionCell = row.getCell(COLUMN_HEADERS.SURGEON.ordinal());
-            if ((surgeonProfessionCell.getStringCellValue() != "" || surgeonProfessionCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!surgeonProfessionCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.SURGEON);
                 request.addRole(ROLES.ASST_SURGEON);
             }
 
             Cell anaeProfessionCell = row.getCell(COLUMN_HEADERS.ANAESTHETIST.ordinal());
-            if ((anaeProfessionCell.getStringCellValue() != "" || anaeProfessionCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!anaeProfessionCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.ANAE);
                 request.addRole(ROLES.ASST_ANAE);
             }
 
             Cell radiologistCell = row.getCell(COLUMN_HEADERS.RADIOLOGIST.ordinal());
-            if ((radiologistCell.getStringCellValue() != "" || radiologistCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!radiologistCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.RADIO);
             }
 
             Cell anaePracCell = row.getCell(COLUMN_HEADERS.ANAESTHETIC_PRACTITIONER.ordinal());
-            if ((anaePracCell.getStringCellValue() != "" || anaePracCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!anaePracCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.ANAE_PRAC);
             }
 
             Cell scrubPracCell = row.getCell(COLUMN_HEADERS.SCRUB_PRACTITIONER.ordinal());
-            if ((scrubPracCell.getStringCellValue() != "" || scrubPracCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!scrubPracCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.SCRUB_PRAC);
             }
 
             Cell circPracCell = row.getCell(COLUMN_HEADERS.CIRCULATING_PRACTITIONER.ordinal());
-            if ((circPracCell.getStringCellValue() != "" || circPracCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!circPracCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.CIRC_PRAC);
             }
 
             Cell haemoPracCell = row.getCell(COLUMN_HEADERS.HAEMOSTASIS_PRACTITIONER.ordinal());
-            if ((haemoPracCell.getStringCellValue() != "" || haemoPracCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!haemoPracCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.HAEM_PRAC);
             }
 
             Cell recovPracCell = row.getCell(COLUMN_HEADERS.RECOVERY_PRACTITIONER.ordinal());
-            if ((recovPracCell.getStringCellValue() != "" || recovPracCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!recovPracCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.RECOV_PRAC);
             }
 
             Cell perfusionistCell = row.getCell(COLUMN_HEADERS.PERFUSIONIST.ordinal());
-            if ((perfusionistCell.getStringCellValue() != "" || perfusionistCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!perfusionistCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.PERF);
             }
 
             Cell trPerfusionistCell = row.getCell(COLUMN_HEADERS.TRAINEE_PERFUSIONIST.ordinal());
-            if ((trPerfusionistCell.getStringCellValue() != "" || trPerfusionistCell.getStringCellValue() != null) && (!request.getProfession_code().equals("ADMIN"))) {
+            if ((!trPerfusionistCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
                 request.addRole(ROLES.TR_PERF);
             }
 
             Cell chLocationCell = row.getCell(COLUMN_HEADERS.CHURCHILL_THEATRES.ordinal());
-            if (chLocationCell.getStringCellValue() != "" || chLocationCell.getStringCellValue() != null){
+            if (!chLocationCell.getStringCellValue().isEmpty()){
                 request.AddLocation(LOCATIONS.CH);
             }
 
             Cell jr1LocationCell = row.getCell(COLUMN_HEADERS.JR1_THEATRES.ordinal());
-            if (jr1LocationCell.getStringCellValue() != "" || jr1LocationCell.getStringCellValue() != null){
+            if (!jr1LocationCell.getStringCellValue().isEmpty()){
                 request.AddLocation(LOCATIONS.JR1);
             }
 
             Cell jr2LocationCell = row.getCell(COLUMN_HEADERS.JR2_THEATRES.ordinal());
-            if (jr2LocationCell.getStringCellValue() != "" || jr2LocationCell.getStringCellValue() != null){
+            if (!jr2LocationCell.getStringCellValue().isEmpty()){
                 request.AddLocation(LOCATIONS.JR2);
             }
 
             Cell hhLocationCell = row.getCell(COLUMN_HEADERS.HORTON_THEATRES.ordinal());
-            if (hhLocationCell.getStringCellValue() != "" || hhLocationCell.getStringCellValue() != null){
+            if (!hhLocationCell.getStringCellValue().isEmpty()){
                 request.AddLocation(LOCATIONS.HH);
             }
 
             Cell wwLocationCell = row.getCell(COLUMN_HEADERS.WEST_WING_THEATRES.ordinal());
-            if (wwLocationCell.getStringCellValue() != "" || wwLocationCell.getStringCellValue() != null){
+            if (!wwLocationCell.getStringCellValue().isEmpty()){
                 request.AddLocation(LOCATIONS.WW);
             }
         }
 
-        //validation of the read in data
+        /*//validation of the read in data
         if (request.getRequestAction() != REQUEST_ACTION.NONE) {
             //valdation of data provided
             if (!request.basicInfoProvided()) {
@@ -807,7 +810,7 @@ public class RequestExtractor {
                 }
                 request = null;
             }
-        }
+        }*/
         return request;
     }
 
