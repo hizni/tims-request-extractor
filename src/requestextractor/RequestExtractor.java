@@ -6,6 +6,10 @@ package requestextractor;/*
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,8 +33,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
-
-
 
 
 /**
@@ -60,8 +62,10 @@ public class RequestExtractor {
         {
 
             //hardcoded directory details
-            File inputDirectory = new File(System.getProperty("user.dir") + "\\requests\\");
-            String outputDirectory = System.getProperty("user.dir") + "\\output\\";
+            checkDirectoryExists(System.getProperty("user.dir") + "\\files\\requests\\");
+            checkDirectoryExists(System.getProperty("user.dir") + "\\files\\output\\");
+            File inputDirectory = new File(System.getProperty("user.dir") + "\\files\\requests\\");
+            String outputDirectory = System.getProperty("user.dir") + "\\files\\output\\";
 
             
             if (!inputDirectory.exists()){
@@ -69,6 +73,7 @@ public class RequestExtractor {
                 System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("Looking for: " + System.getProperty("user.dir") + "\\requests\\" );
             } else {
+                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\sql\\");
                 File sqlOutputFile = new File(outputDirectory + "\\sql\\" + currentDate + "_sqlScript.sql");
                 File[] listOfFiles = inputDirectory.listFiles();
                 List<File> successfulProcessedFiles = new ArrayList<File>();
@@ -86,13 +91,14 @@ public class RequestExtractor {
                             System.out.println("Processing: " + currentFile.getName() + "....");
                             if (processSpreadsheet(currentFile, sqlOutputFile)) {
                                 successfulProcessedFiles.add(currentFile);
-                                
+                                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\done\\");
                                 //fixme temporarily removed
-                                //copyFile(currentFile,System.getProperty("user.dir") + "\\done\\" + currentDate);
+                                //copyFile(currentFile,System.getProperty("user.dir") + "\\files\\done\\" + currentDate);
                             } else {
                                 erroredFiles.add(currentFile);
+                                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\error\\");
                                 //fixme temporarily removed
-                               // copyFile(currentFile,System.getProperty("user.dir") + "\\error\\" + currentDate);
+                                // copyFile(currentFile,System.getProperty("user.dir") + "\\files\\error\\" + currentDate);
                                 RequestReport m = new RequestReport();
                                 m.setUsername("-");
                                 m.setPassword("-");
@@ -607,6 +613,15 @@ public class RequestExtractor {
         }
 
         return success;
+    }
+
+    private static void checkDirectoryExists(String pathString){
+        Path path = Paths.get(pathString);
+
+        if (Files.notExists(path)){
+            File newDirecotry = new File(pathString);
+            newDirecotry.mkdirs();
+        }
     }
 
     private static Request populateRequestObject(Row row) {
