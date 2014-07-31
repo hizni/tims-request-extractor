@@ -208,7 +208,25 @@ public class DataAccess {
             return retVal;
         }
     }
-    
+
+    public int DoesUserAccountHaveAccountPrivilages(String username){
+        int retVal = 0;
+        try{
+            String sql = "select count(user_id) from TIMS.app_priv_group_members where user_id in (select uid from theatre_prod.dbo.sysusers where name like '" + username +"') ";
+            stmt = getConnection().createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            ResultSet rs = stmt.executeQuery(sql);
+            if (rs.next()) {
+                retVal = rs.getInt(1);
+
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger("Username " + username);
+            Logger.getLogger(DataAccess.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            return retVal;
+        }
+
+    }
     public int CheckUserAccountPrivilageAssociationExist(String username, RequestExtractor.PASSWORD_PRIVILAGE priv) {
         int retVal = 0;
         try {

@@ -52,7 +52,7 @@ public class GenerateSQL {
         ps.println("'" + getRequest().getSQLFriendlyForename() + "',");
         ps.println("'" + getRequest().getSQLFriendlySurname() + "',");
         ps.println("'" + getRequest().getProfession_code() + "',");
-               
+
         //if no start date is given by default use current date
         if (getRequest().getStartDate() == null){                   
             ps.println("'" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()) + "',");
@@ -209,8 +209,8 @@ public class GenerateSQL {
 
         if (!username.equals("") || username != null) {
             ps.println("-- adding/updating account access privilage information");
-            
-            int doesExist = getData().CheckUserAccountPrivilageAssociationExist(username, getRequest().getPasswordPrivilage());
+            int doesExist = getData().DoesUserAccountHaveAccountPrivilages(username);
+            //int doesExist = getData().CheckUserAccountPrivilageAssociationExist(username, getRequest().getPasswordPrivilage());
             if (doesExist == 0){
                 switch (getRequest().getPasswordPrivilage()){
                 case READONLY:
@@ -423,7 +423,9 @@ public class GenerateSQL {
         ps.println("set title = '" + getRequest().getTitle() + "',");
         ps.println("forename = '" + getRequest().getSQLFriendlyForename() + "',");
         ps.println("surname = '" + getRequest().getSQLFriendlySurname() + "',");
-        ps.println("profession_code = '" + getRequest().getProfession_code() + "',");
+        if (!getRequest().getProfession_code().toString().equals("NONE")) {
+            ps.println("profession_code = '" + getRequest().getProfession_code() + "',");
+        }
         //if no start date is given by default use current date
         if (getRequest().getStartDate() == null) {
             ps.println("contract_start_date = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()) + "',");

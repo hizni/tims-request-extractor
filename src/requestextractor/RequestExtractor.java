@@ -108,11 +108,11 @@ public class RequestExtractor {
  
                 
                 
-                //delete all files with XLSM extension
+                //delete all files with XLSX extension
                 for (int i = 0; i < listOfFiles.length; i++) {
                     if (listOfFiles[i].isFile()) {
                         String files = listOfFiles[i].getName();
-                        if (files.endsWith(".xlsm") || files.endsWith(".XLSM")) {
+                        if (files.endsWith(".xlsx") || files.endsWith(".XLSX")) {
                             File currentFile = listOfFiles[i];
                             //fixme temporarily removed next line
                             currentFile.delete(); //removes this file from the original source location
@@ -163,7 +163,7 @@ public class RequestExtractor {
                     for (int i = 0; i < 7; i++) {
                         switch (i) {
                             case 0:
-                                table.getRow(0).getCell(i).setText("requestextractor.Request");
+                                table.getRow(0).getCell(i).setText("Request");
                                 break;
                             case 1:
                                 table.getRow(0).getCell(i).setText("Action taken");
@@ -441,6 +441,7 @@ public class RequestExtractor {
                                         man.setPassword(password);                                        
                                     }
 
+
                                     if (r.isEditExistingAccount()) {
                                         if (r.getTimsInternalID().equals("") || r.getTimsInternalID() == null) {
                                             man.setDetail("No internal TIMS ID was provided. Please resubmit request");
@@ -458,12 +459,12 @@ public class RequestExtractor {
                                                     
                                                     man.setDetail("Editing TIMS account details. Password will not be reset unless explicitly requested.");
                                                     man.setUsername(username);                                    
-                                                } else {
+                                                } /*else {
                                                     gen.resetSQLServerAccount(username, password);
                                                     man.setDetail("Resetting password as requested.");
                                                     man.setUsername(username);
                                                     man.setPassword(password);
-                                                }
+                                                }*/
                                             }
                                         }
                                     }
@@ -536,6 +537,10 @@ public class RequestExtractor {
                                                 gen.AddAccountPrivilage(username);
                                                 
                                                 gen.UpdateStaffLocationAccess(username);
+                                            } else {
+                                                if (r.getRequestAction() == REQUEST_ACTION.CHANGEACCESS)
+                                                    gen.EditTimsStaffDetails();
+                                                    gen.UpdateAccountPrivilage(username);
                                             }
 
                                             //if (r.isResetPassword()) {
@@ -690,7 +695,7 @@ public class RequestExtractor {
             }
             request.setForename(WordUtils.capitalizeFully(row.getCell(COLUMN_HEADERS.FORENAME.ordinal()).getStringCellValue()));
             request.setSurname(WordUtils.capitalizeFully(row.getCell(COLUMN_HEADERS.SURNAME.ordinal()).getStringCellValue()));
-            request.setTimsInternalID(nf.format(row.getCell(COLUMN_HEADERS.SECURITY_BADGE_ID.ordinal()).getNumericCellValue()));
+            request.setTimsInternalID(nf.format(row.getCell(COLUMN_HEADERS.TIMS_ID_NUMBER.ordinal()).getNumericCellValue()));
 
             Cell startDateCell = row.getCell(COLUMN_HEADERS.START_DATE.ordinal());
             String startDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
