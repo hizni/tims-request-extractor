@@ -705,7 +705,7 @@ public class RequestExtractor {
             request.setStartDate(startDate);
 
             Cell finishDateCell = row.getCell(COLUMN_HEADERS.FINISH_DATE.ordinal());
-            String finishDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
+            String finishDate = null;//new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
             if (finishDateCell.getCellType() != Cell.CELL_TYPE_BLANK){
                 finishDate = new SimpleDateFormat("dd-MMM-yyyy").format(finishDateCell.getDateCellValue());
             }
