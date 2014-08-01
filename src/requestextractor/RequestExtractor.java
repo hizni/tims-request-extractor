@@ -671,7 +671,17 @@ public class RequestExtractor {
 
         if (request.getRequestAction().equals(REQUEST_ACTION.NONE)) {request = null; }
         else {
+            //
             request.setProfession_code(row.getCell(COLUMN_HEADERS.PROFESSION_CODE.ordinal()).getStringCellValue());
+
+            //fixme - non theatre nurses are considered by TIMS as ADMIN and won't appear on TIMS / theatre nurses are considered as NURSE
+            //fix should be put in on registration form
+            if (request.getProfession_code().equals("NURSE")){
+                request.setProfession_code("ADMIN");
+            } else if (request.getProfession_code().equals("NURSETH")){
+                request.setProfession_code("NURSE");
+            }
+
             request.setSpecialty_code(nf.format(row.getCell(COLUMN_HEADERS.SPECIALTY_CODE.ordinal()).getNumericCellValue()));
 
             String passwordPrivilageCodeCellValue = (row.getCell(COLUMN_HEADERS.PWD_PRIVILAGE_CODE.ordinal()).getStringCellValue());
