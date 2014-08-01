@@ -418,7 +418,7 @@ public class RequestExtractor {
                                                     username = r.getForename().replaceAll("\\s+","") + tidiedSurname.substring(0, i) + "1";
                                                 }
 
-                                                //check if the created username already exists. Returns a 0 if true.
+                                                //check if the created username already exists. Returns a 0 does not exist
                                                 if (da.CheckUsernameExist(username) == 0) {
                                                     break;
                                                 }
@@ -426,8 +426,9 @@ public class RequestExtractor {
                                         }
                                     }
                                     String password = RandomPasswordGenerator.generatePswd(8, 8, 2, 3, 0).toString();
-                                    
-                                    if (r.isAddNewAccount()) {
+
+                                    //todo simplify logic badly badly written. After holidays!!
+                                    if (r.isAddNewAccount() || r.isNewPasswordNeeded()) {
                                                                                
                                         //16-10-13 HS
                                         //Was trying to over complicate logic and put in a check to not create the user account if the user already appeared to exist on the
@@ -438,7 +439,11 @@ public class RequestExtractor {
                                         r.setPassword(password);
                                         man.setDetail("Adding user details to TIMS and setting up account to access");       
                                         man.setUsername(username);
-                                        man.setPassword(password);                                        
+                                        man.setPassword(password);
+
+                                        if (r.getTimsInternalID() != "" || r.getTimsInternalID() != null){
+                                            gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
+                                        }
                                     }
 
 
