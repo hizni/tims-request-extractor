@@ -273,7 +273,6 @@ public class RequestExtractor {
     /**
      *
      * @param inputSpreadsheet
-     * @param outputManifest
      * @param outputScript
      * @return
      */
@@ -441,9 +440,13 @@ public class RequestExtractor {
                                         man.setUsername(username);
                                         man.setPassword(password);
 
-                                        if (r.getTimsInternalID() != "" || r.getTimsInternalID() != null){
-                                            gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
-                                        }
+                                        /*if (r.getTimsInternalID() != "" || r.getTimsInternalID() != null){
+                                            if (r.getTimsInternalID() == "0"){
+                                                gen.AddTimsStaffSysuser(username);
+                                            } else {
+                                                gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
+                                            }
+                                        }*/
                                     }
 
 
@@ -464,12 +467,7 @@ public class RequestExtractor {
                                                     
                                                     man.setDetail("Editing TIMS account details. Password will not be reset unless explicitly requested.");
                                                     man.setUsername(username);                                    
-                                                } /*else {
-                                                    gen.resetSQLServerAccount(username, password);
-                                                    man.setDetail("Resetting password as requested.");
-                                                    man.setUsername(username);
-                                                    man.setPassword(password);
-                                                }*/
+                                                }
                                             }
                                         }
                                     }
@@ -503,9 +501,16 @@ public class RequestExtractor {
                                             gen.AddConsultantGrade();
                                         }
                                     }
+
                                     //if a new password needs to be created a suitable username that does not already exist must be used
                                     if (r.isNewPasswordNeeded()) {
-                                        gen.AddTimsStaffSysuser(username);
+                                        if (r.getTimsInternalID() != "" || r.getTimsInternalID() != null){
+                                            if (r.getTimsInternalID().equals("0")){
+                                                gen.AddTimsStaffSysuser(username);
+                                            } else {
+                                                gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
+                                            }
+                                        }
                                         gen.AddStaffLocationAccess(username);
                                         gen.AddAccountPrivilage(username);
                                     }
@@ -534,26 +539,7 @@ public class RequestExtractor {
                                                 gen.UpdateConsultantGrade();
                                             }
                                         }
-                                        if (username != "") {
-                                            if (r.isNewPasswordNeeded()) {
-                                                //gen.AddTimsStaffSysuser(username);
-                                                gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
-                                                gen.AddStaffLocationAccess(username);
-                                                gen.AddAccountPrivilage(username);
-                                                
-                                                gen.UpdateStaffLocationAccess(username);
-                                            } else {
-                                                if (r.getRequestAction() == REQUEST_ACTION.CHANGEACCESS)
-                                                    gen.EditTimsStaffDetails();
-                                                    gen.UpdateAccountPrivilage(username);
-                                            }
-
-                                            //if (r.isResetPassword()) {
-                                                //gen.UpdateStaffLocationAccess(username);
-                                                //gen.UpdateAccountPrivilage(username);                                                
-                                            //}
-                                        }
-                                    } 
+                                    }
                                 }
 
                                 // Removing an account - doesn't seem to work as hoped. Plus theatres very rarely retire users from TIMS.
