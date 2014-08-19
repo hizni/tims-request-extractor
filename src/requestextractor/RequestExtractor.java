@@ -115,7 +115,7 @@ public class RequestExtractor {
                         if (files.endsWith(".xlsx") || files.endsWith(".XLSX")) {
                             File currentFile = listOfFiles[i];
                             //fixme temporarily removed next line
-                            currentFile.delete(); //removes this file from the original source location
+                           // currentFile.delete(); //removes this file from the original source location
                         }
                     }
                 }
@@ -542,6 +542,11 @@ public class RequestExtractor {
                                     }
                                 }
 
+                                if (r.getRequestAction().equals(REQUEST_ACTION.GRANTEXISTACCESS)){
+                                    gen.AddTimsStaffSysuser(r.getUsername());
+                                    gen.AddStaffLocationAccess(r.getUsername());
+                                }
+
                                 // Removing an account - doesn't seem to work as hoped. Plus theatres very rarely retire users from TIMS.
                                 // A better solution would be to 
                                 if (r.isRemoveExistingAccount()) {
@@ -577,11 +582,8 @@ public class RequestExtractor {
             }  //end of while loop
 
             if (correctVersion){
-                //Produce manifest document
-                //System.setOut(System.out);
                 CreateRequestReportDocument(requestListWithRequestingLocation);
             }
-
         } 
         catch (Exception ex){
             Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, "Exception has been caught: " + ex, ex);

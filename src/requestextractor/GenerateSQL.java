@@ -155,7 +155,7 @@ public class GenerateSQL {
                     //only retire location that matches the location from where the request was sent
                     if (locationCode.equals(request.getRequestingLocation())) {
                         String currentDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
-                        ps.println("update tims.account_location_privilages set (archive_flag = '" + currentDate + "') where account_name = '" + username + " and location_group_id in ('" + getRequest().getRequestingLocation() + "');");
+                        ps.println("update tims.account_location_privilages set archive_flag = '" + currentDate + "' where account_name = '" + username + "' and location_group_id in ('" + getRequest().getRequestingLocation() + "');");
                     }
                 } else {
                     ps.println("-- Error - too many location group ID discovered for staff_username = '" + username + "' and location_group_id ='" + locationCode + "'\n");
@@ -305,11 +305,11 @@ public class GenerateSQL {
                 //only retire location that matches the location from where the request was sent
                 if (locationCode.equals(request.getRequestingLocation())) {
                     String currentDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
-                    ps.println("update tims.staff_theatre_groups set (archive_flag = '" + currentDate + "') where staff_id = '" + getRequest().getTimsInternalID() +" and location_group_id in ('" + getRequest().getRequestingLocation() + "');");                
+                    ps.println("update tims.staff_theatre_groups set archive_flag = '" + currentDate + "' where staff_id = '" + getRequest().getTimsInternalID() +"' and location_group_id in ('" + getRequest().getRequestingLocation() + "');");
                 }
             }
             else{
-                ps.println("-- Error - too many location codes discovered for staff_id = '" + getRequest().getTimsInternalID() +" and location_code='" + locationCode + "'\n");
+                ps.println("-- Error - too many location codes discovered for staff_id = " + getRequest().getTimsInternalID() +" and location_code='" + locationCode + "'\n");
             }
         }
         ps.flush();
@@ -398,10 +398,10 @@ public class GenerateSQL {
                 String roleCode = (String) roleIter.next();
                 int doesExist = getData().CheckUserRoleAssociationExist(getRequest().getTimsInternalID(), roleCode);
                 if (doesExist == 0) {
-                    ps.println("-- Error - Cannot retire since association does not exist for staff_id = '" + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "'");
+                    ps.println("-- Error - Cannot retire since association does not exist for staff_id = " + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "'");
                 } else if (doesExist == 1) {
                     String currentDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
-                    ps.println("update tims.staff_roles set (archive_flag = '" + currentDate + "') where staff_id = '" + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "');");
+                    ps.println("update tims.staff_roles set archive_flag = '" + currentDate + "' where staff_id = '" + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "';");
                 } else {
                     ps.println("-- Error - too many role codes discovered for staff_id = '" + getRequest().getTimsInternalID() + "' and role_code='" + roleIter.next().toString() + "'");
                 }
@@ -446,7 +446,7 @@ public class GenerateSQL {
         ps.println("\n-- retire staff record from TIMS\n");
         ps.println("update tims.staff ");        
         //if no start date is given by default use current date
-        ps.println("set archive_flag = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()) + "',");        
+        ps.println("set archive_flag = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()));
         ps.println("where staff_id like '" + getRequest().getTimsInternalID() + "';");
         ps.flush();
     }
@@ -468,7 +468,10 @@ public class GenerateSQL {
     
     public void resetSQLServerAccount(String username, String password) {
         ps.println("\n-- reset SQL server password for named account\n");
+        ps.println("USE [master]");
+        ps.println("GO");
         ps.println("EXEC master.dbo.sp_password @old=NULL, @new='" + password + "', @loginame=[" + username + "]");
+        ps.println("GO");
         ps.flush();
     }
         
