@@ -240,7 +240,7 @@ public class GenerateSQL {
                 
             }
             else {
-                ps.println("-- Error - too many of the same privilage code codes discovered for staff_id = '" + getRequest().getTimsInternalID() +"' and privilage_code='" + getRequest().getPasswordPrivilage() + "'");
+                ps.println("-- Error - too many of the same privilege code codes discovered for staff_id = '" + getRequest().getTimsInternalID() +"' and privilege_code='" + getRequest().getPasswordPrivilage() + "'");
             }
         }
         ps.flush();
@@ -266,8 +266,6 @@ public class GenerateSQL {
         ps.flush();
     }   
 
-
-        
     //public String UpdateTIMS_LocationAccessPrivilages(String username) {     
     public void UpdateStaffLocationDropdown() {   
         
@@ -292,7 +290,6 @@ public class GenerateSQL {
     }
     
     public void RetireStaffLocationDropdown() {
-        
         ps.println("\n-- retiring locations that appear in TIMS dropdown");
         Iterator locIter = getRequest().getLocationCollection().iterator();
         while (locIter.hasNext()) {
@@ -313,10 +310,6 @@ public class GenerateSQL {
             }
         }
         ps.flush();
-        
-        
-      
-
     }
         
     public void UpdateStaffRoles() {         
@@ -401,7 +394,7 @@ public class GenerateSQL {
                     ps.println("-- Error - Cannot retire since association does not exist for staff_id = " + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "'");
                 } else if (doesExist == 1) {
                     String currentDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
-                    ps.println("update tims.staff_roles set archive_flag = '" + currentDate + "' where staff_id = '" + getRequest().getTimsInternalID() + " and role_code='" + roleCode + "';");
+                    ps.println("update tims.staff_roles set archive_flag = '" + currentDate + "' where staff_id = '" + getRequest().getTimsInternalID() + "' and role_code='" + roleCode + "';");
                 } else {
                     ps.println("-- Error - too many role codes discovered for staff_id = '" + getRequest().getTimsInternalID() + "' and role_code='" + roleIter.next().toString() + "'");
                 }

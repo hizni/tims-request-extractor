@@ -114,8 +114,7 @@ public class RequestExtractor {
                         String files = listOfFiles[i].getName();
                         if (files.endsWith(".xlsx") || files.endsWith(".XLSX")) {
                             File currentFile = listOfFiles[i];
-                            //fixme temporarily removed next line
-                           // currentFile.delete(); //removes this file from the original source location
+                            currentFile.delete(); //removes this file from the original source location
                         }
                     }
                 }
@@ -517,7 +516,6 @@ public class RequestExtractor {
                                 } //end of addNewAccount
 
                                 if (r.isEditExistingAccount()) {
-                                    username = da.GetUsernameByTimsInternalID(r.getTimsInternalID());
                                     if (r.getTimsInternalID().equals("") || r.getTimsInternalID() == null){
                                         //System.out.println("-- No TIMS internal ID was provided. Manifest now contains a request to the theatre administrator to check and resend the user registration request");
                                         man.setUsername("-");
@@ -529,8 +527,10 @@ public class RequestExtractor {
                                         if (!r.getProfession_code().equals("ADMIN")) {
                                             gen.UpdateStaffRoles();                                            
                                             gen.UpdateStaffLocationDropdown();
-                                        } 
-                                        
+                                        }
+
+                                        //13-05-15 HS - Update staff location access information
+                                        gen.UpdateStaffLocationAccess(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
                                         
                                         //will only add/update consultant grade if request is for a doctor. Validation rule
                                         if (r.isDoctor()) {
@@ -543,7 +543,7 @@ public class RequestExtractor {
                                 }
 
                                 if (r.getRequestAction().equals(REQUEST_ACTION.GRANTEXISTACCESS)){
-                                    gen.AddTimsStaffSysuser(r.getUsername());
+                                    gen.AddTimsStaffSysuserToExistingAccount(r.getUsername(), r.getTimsInternalID());
                                     gen.AddStaffLocationAccess(r.getUsername());
                                 }
 
