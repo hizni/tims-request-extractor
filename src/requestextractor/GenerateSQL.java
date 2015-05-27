@@ -27,7 +27,6 @@ public class GenerateSQL {
        ps = new PrintStream(new FileOutputStream(scriptFile, true));
        //System.setOut(new PrintStream(new FileOutputStream(scriptFile, true)));
        ps.println("/**** requestextractor.Request for: " + r.getForename() + " " + r.getSurname().toString() + "****/");
-       //script = new StringBuilder("-- ***** SQL script for: ").append(getRequest().getForename()).append(" ").append(getRequest().getSurname().toUpperCase());        
     }
 
     public void StartTransaction(){
@@ -104,8 +103,6 @@ public class GenerateSQL {
     public void AddConsultantGrade() {
         ps.println("\n-- adding staff role for consultant\n");
         ps.println("insert into tims.staff_grades (staff_id, grade_code) values (@timsID,'CON');");
-        
-        //return script.toString();        
         ps.flush();
        
     }
@@ -166,8 +163,7 @@ public class GenerateSQL {
     }
     
 
-    public void AddStaffRoles() {        
-
+    public void AddStaffRoles() {
         if (getRequest().getRoleCollection().size() > 0) {
             ps.println("\n-- adding staff role information");
             Iterator rolIter = getRequest().getRoleCollection().iterator();
@@ -179,8 +175,7 @@ public class GenerateSQL {
         ps.flush();
     } 
     
-    public void AddDoctorSpecialty() {        
-
+    public void AddDoctorSpecialty() {
         if (getRequest().isDoctor()) {
             ps.println("\n-- adding doctor specialty information");
             ps.println("insert into tims.doctor_specialty (staff_id, local_spec_code) values (@timsID,'" + getRequest().getSpecialty_code() + "');");
@@ -188,8 +183,7 @@ public class GenerateSQL {
         ps.flush();
     }   
     
-    public void AddAccountPrivilage(String username) {        
-//ps.println("insert into tims.staff_sysusers (staff_id, uid, account_name) ");
+    public void AddAccountPrivilage(String username) {
         if (getRequest().isAddNewAccount()) {
             ps.println("\n-- adding TIMS account privilage information");
             switch (getRequest().getPasswordPrivilage()){
@@ -198,6 +192,7 @@ public class GenerateSQL {
                     break;
                 case FULL:
                     ps.println("insert into TIMS.app_priv_group_members (user_id, group_id) select uid, '3' from theatre_prod.dbo.sysusers where name like '" + username +"';");
+                    break;
                 case NONE:
                 default:
                     break;
@@ -213,31 +208,32 @@ public class GenerateSQL {
             //int doesExist = getData().CheckUserAccountPrivilageAssociationExist(username, getRequest().getPasswordPrivilage());
             if (doesExist == 0){
                 switch (getRequest().getPasswordPrivilage()){
-                case READONLY:
-                    ps.println("insert into TIMS.app_priv_group_members (user_id, group_id) select uid, '5' from theatre_prod.dbo.sysusers where name like '" + username +"';");        
-                    break;
-                case FULL:
-                    ps.println("insert into TIMS.app_priv_group_members (user_id, group_id) select uid, '3' from theatre_prod.dbo.sysusers where name like '" + username +"';");
-                case NONE:
-                default:
-                    break;
-            }
+                    case READONLY:
+                        ps.println("insert into TIMS.app_priv_group_members (user_id, group_id) select uid, '5' from theatre_prod.dbo.sysusers where name like '" + username +"';");
+                        break;
+                    case FULL:
+                        ps.println("insert into TIMS.app_priv_group_members (user_id, group_id) select uid, '3' from theatre_prod.dbo.sysusers where name like '" + username +"';");
+                        break;
+                    case NONE:
+                    default:
+                        break;
+                }
             }
             else if (doesExist == 1){
                 //reset all to 
                 String currentDate = new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
                 ps.println("update tims.app_priv_group_members set archive_flag = '" + currentDate + "' where user_id in (select uid from theatre_prod.dbo.sysusers where name like '" + username +"');");
                 switch (getRequest().getPasswordPrivilage()){
-                case READONLY:
+                    case READONLY:
                         ps.println("update tims.app_priv_group_members set archive_flag = '01-JAN-1900' where group_id = '5' and user_id in ( select uid from theatre_prod.dbo.sysusers where name like '" + username +"');");
-                    break;
-                case FULL:
-                     ps.println("update tims.app_priv_group_members set archive_flag = '01-JAN-1900' where group_id = '3' and user_id in ( select uid from theatre_prod.dbo.sysusers where name like '" + username +"');");
-                case NONE:
-                default:
-                    break;
-            }
-                
+                        break;
+                    case FULL:
+                         ps.println("update tims.app_priv_group_members set archive_flag = '01-JAN-1900' where group_id = '3' and user_id in ( select uid from theatre_prod.dbo.sysusers where name like '" + username +"');");
+                         break;
+                    case NONE:
+                    default:
+                        break;
+                }
             }
             else {
                 ps.println("-- Error - too many of the same privilege code codes discovered for staff_id = '" + getRequest().getTimsInternalID() +"' and privilege_code='" + getRequest().getPasswordPrivilage() + "'");
@@ -439,11 +435,29 @@ public class GenerateSQL {
         ps.println("\n-- retire staff record from TIMS\n");
         ps.println("update tims.staff ");        
         //if no start date is given by default use current date
-        ps.println("set archive_flag = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()));
+        ps.println("set archive_flag = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()) + "' ");
         ps.println("where staff_id like '" + getRequest().getTimsInternalID() + "';");
         ps.flush();
     }
-    
+
+    public void RetireTimsStaffSysuser() {
+        ps.println("\n-- retire staff account for user\n");
+        ps.println("update tims.staff_sysuser ");
+        ps.println("set archive_flag = '" + new SimpleDateFormat("dd-MMM-yyyy").format(new Date()) + "'");
+        ps.println("where staff_id = '" + getRequest().getTimsInternalID() + "';");
+        ps.flush();
+    }
+
+    public void ReactivateTimsStaffSysuser() {
+        ps.println("\n-- reactivate staff account for user\n");
+        ps.println("update tims.staff_sysuser ");
+        ps.println("set archive_flag = '01-01-1900'");
+        ps.println("where staff_id = '" + getRequest().getTimsInternalID() + "';");
+        ps.flush();
+    }
+
+
+    // ---- SQL scripts that make use of System Stored Procedures
     public void CreateSQLServerAccount(String username, String password) {
 
         ps.println("\n-- create sql server account and associate it to role\n");
@@ -453,6 +467,26 @@ public class GenerateSQL {
         ps.println("USE [theatre_prod]");
         ps.println("GO");
         ps.println("EXEC dbo.sp_grantdbaccess @loginame = N'" + username + "',@name_in_db = N'" + username + "'");
+        ps.println("GO");
+        ps.println("EXEC sp_addrolemember N'TIMS_USER', N'" + username + "'");
+        ps.println("GO");
+        ps.flush();
+    }
+
+    public void RetireSQLServerAccount(String username) {
+        ps.println("\n-- assigns an existing sql server account to the retired TIMS User role\n");
+        ps.println("USE [theatre_prod]");
+        ps.println("EXEC sp_addrolemember N'RetiredTimsUsers', N'" + username + "'");
+        ps.println("GO");
+        ps.println("EXEC sp_droprolemember N'TIMS_USER', N'" + username + "'");
+        ps.println("GO");
+        ps.flush();
+    }
+
+    public void ReactivateSQLServerAccount(String username) {
+        ps.println("\n-- reassociating an existing sql server account to TIMS_USER role\n");
+        ps.println("USE [theatre_prod]");
+        ps.println("EXEC sp_droprolemember N'RetiredTimsUsers', N'" + username + "'");
         ps.println("GO");
         ps.println("EXEC sp_addrolemember N'TIMS_USER', N'" + username + "'");
         ps.println("GO");
