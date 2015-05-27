@@ -57,20 +57,18 @@ public class RequestExtractor {
     public static void main(String[] args) {
         try 
         {
-
-            //hardcoded directory details
-            checkDirectoryExists(System.getProperty("user.dir") + "\\files\\requests\\");
-            checkDirectoryExists(System.getProperty("user.dir") + "\\files\\output\\");
+            createDirectory(System.getProperty("user.dir") + "\\files\\requests\\");
+            createDirectory(System.getProperty("user.dir") + "\\files\\output\\");
             File inputDirectory = new File(System.getProperty("user.dir") + "\\files\\requests\\");
             String outputDirectory = System.getProperty("user.dir") + "\\files\\output\\";
 
             
             if (!inputDirectory.exists()){
-                //System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("Looking for: " + System.getProperty("user.dir") + "\\files\\requests\\" );
-            } else {
-                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\sql\\");
+            }
+            else {
+                createDirectory(System.getProperty("user.dir") + "\\files\\sql\\");
                 File sqlOutputFile = new File(outputDirectory + "\\sql\\" + currentDate + "_sqlScript.sql");
                 File[] listOfFiles = inputDirectory.listFiles();
                 List<File> successfulProcessedFiles = new ArrayList<File>();
@@ -88,13 +86,11 @@ public class RequestExtractor {
                             System.out.println("Processing: " + currentFile.getName() + "....");
                             if (processSpreadsheet(currentFile, sqlOutputFile)) {
                                 successfulProcessedFiles.add(currentFile);
-                                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\done\\");
-                                //fixme temporarily removed
+                                createDirectory(System.getProperty("user.dir") + "\\files\\done\\");
                                 copyFile(currentFile,System.getProperty("user.dir") + "\\files\\done\\" + currentDate);
                             } else {
                                 erroredFiles.add(currentFile);
-                                checkDirectoryExists(System.getProperty("user.dir") + "\\files\\error\\");
-                                //fixme temporarily removed
+                                createDirectory(System.getProperty("user.dir") + "\\files\\error\\");
                                 copyFile(currentFile,System.getProperty("user.dir") + "\\files\\error\\" + currentDate);
                                 RequestReport m = new RequestReport();
                                 m.setUsername("-");
@@ -105,8 +101,6 @@ public class RequestExtractor {
                         }
                     }
                 }
- 
-                
                 
                 //delete all files with XLSX extension
                 for (int i = 0; i < listOfFiles.length; i++) {
@@ -119,20 +113,16 @@ public class RequestExtractor {
                     }
                 }
                 if (numberOfEncounteredFiles == 0){
-                    //System.setOut(System.out);
                     System.out.println("Nothing to do! No TIMS request files encountered");
                 }
 
-                //Producing manifest
-                //CreateRequestReportDocument(requestListWithRequestingLocation);
-                }
-            } catch (IOException ioEx) {
-                Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ioEx);
+
             }
-            catch (Exception ex) {
-                Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        
+        } catch (IOException ioEx) {
+            Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ioEx);
+        } catch (Exception ex) {
+            Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     private static void CreateRequestReportDocument(ListMultimap<LOCATIONS, RequestReport> requestReportListWithRequestingLocation) {
@@ -192,7 +182,7 @@ public class RequestExtractor {
                             for (int i = 0; i < 6; i++) {
                                 switch (i) {
                                     case 0:
-                                        if (man.getRequest().toString() != null) //table.getRow(currentRow).getCell(i).setText(man.getRequest().toString());
+                                        if (man.getRequest().toString() != null)
                                         {
                                             table.getRow(currentRow).getCell(i).setText(man.getRequest().getRequestAction().toString());
                                         }
@@ -230,7 +220,6 @@ public class RequestExtractor {
                     doc.write(fos);
                     fos.flush();
                     fos.close();
-                    
                 }
             }   
         }
@@ -274,11 +263,9 @@ public class RequestExtractor {
      * @param outputScript
      * @return
      */
-    //private static boolean processSpreadsheet(File inputSpreadsheet, File outputManifest, File outputScript) {
     private static boolean processSpreadsheet(File inputSpreadsheet, File outputScript) throws Exception {
         FileInputStream spreadsheetIS = null;
         FileOutputStream scriptOS = null;
-//      FileOutputStream manifestOS = null;
 
         boolean success = true;
         try {
@@ -303,6 +290,7 @@ public class RequestExtractor {
             
             da = new DataAccess();
             Iterator rows = sheet.rowIterator();
+
             //iterate over each row in Excel spreadsheet
             while (rows.hasNext()) {
                 String requestLocation = "";
@@ -312,7 +300,7 @@ public class RequestExtractor {
                 cell = row.getCell(0);
 
                 if (cell != null) {
-                    //atempting to discover header row
+                    //attempting to discover header row
                     int cellValue = cell.getCellType();
 
                     if (cellValue == Cell.CELL_TYPE_STRING) {
@@ -369,7 +357,7 @@ public class RequestExtractor {
                             }
                             if (man.isGenerateSQL()) { //flag set to true if ok to proceed with SQL script generation. All outcomes of this check are held in manifest
 
-                                //only initialse the FileOutputStream for the SQL Script file only if SQL is required to be generated
+                                //only initialise the FileOutputStream for the SQL Script file only if SQL is required to be generated
                                 if (scriptOS == null) {
                                     scriptOS = new FileOutputStream(outputScript, true);
                                 }
@@ -616,33 +604,29 @@ public class RequestExtractor {
         }
         finally {
             try {
+                //tidying up file resources
 
-                //if outputStream object has been initialised then flush and close it. This will cause a Sql script file to be closed
                 if (scriptOS != null){
                     scriptOS.flush();
                     scriptOS.close();
                 }
 
-                //closing file streams
                 spreadsheetIS.close();
-
-                
-                
             } catch (IOException ex) {
                 Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ex);
                 success = false;
             }
         }
-
         return success;
     }
 
-    private static void checkDirectoryExists(String pathString){
+    //checks if directory exists.
+    private static void createDirectory(String pathString){
         Path path = Paths.get(pathString);
 
         if (Files.notExists(path)){
-            File newDirecotry = new File(pathString);
-            newDirecotry.mkdirs();
+            File newDirectory = new File(pathString);
+            newDirectory.mkdirs();
         }
     }
 
@@ -706,7 +690,6 @@ public class RequestExtractor {
             }
 
             request.setSpecialty_code(nf.format(row.getCell(COLUMN_HEADERS.SPECIALTY_CODE.ordinal()).getNumericCellValue()));
-
             String passwordPrivilageCodeCellValue = (row.getCell(COLUMN_HEADERS.PWD_PRIVILAGE_CODE.ordinal()).getStringCellValue());
             if (passwordPrivilageCodeCellValue.equals(PASSWORD_PRIVILAGE.FULL.toString())) {
                 request.setPasswordPrivilage(PASSWORD_PRIVILAGE.FULL);
