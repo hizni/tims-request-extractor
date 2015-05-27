@@ -4,3 +4,5 @@ files/
 *.iml
 *.ipr
 *.iws
+report-extractor-launch4jConfig.xml
+index.html
