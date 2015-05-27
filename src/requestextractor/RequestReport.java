@@ -70,6 +70,7 @@ public class RequestReport {
                                 //manifest.append(getRequest().getRequestingLocation()).append("Error: Too many users encountered with same names: - ").append(request.getForename()).append(" ").append(request.getSurname().toUpperCase());
                                 getRequest().setRequestingLocation(LOCATIONS.UNKNOWN);
                                 setDetail("Error: Too many users encountered with same names!");
+                                setAlreadyExist(true);
                                 setGenerateSQL(false);
                                 break;
                 //         }
