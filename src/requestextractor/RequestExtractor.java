@@ -126,7 +126,7 @@ public class RequestExtractor {
     }
 
     private static void CreateRequestReportDocument(ListMultimap<LOCATIONS, RequestReport> requestReportListWithRequestingLocation) {
-        String fileName = System.getProperty("user.dir") + "\\files\\templates\\timsRequestTemplate.docx";
+        String fileName = System.getProperty("user.dir") + "\\resourceFiles\\timsRequestTemplate.docx";
 
         POIFSFileSystem fs = null;
         FileOutputStream fos = null;
