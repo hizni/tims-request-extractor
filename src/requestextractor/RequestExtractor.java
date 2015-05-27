@@ -283,11 +283,6 @@ public class RequestExtractor {
         boolean success = true;
         try {
             spreadsheetIS = new FileInputStream(inputSpreadsheet);
-            //manifestOS = new FileOutputStream(outputManifest);
-
-            //read in TIMS request file
-            //PrintStream scriptOut = new PrintStream(scriptOS);
-            //PrintStream manifestOut = new PrintStream(manifestOS);
 
             //if xlsx file Office 2007+
             XSSFWorkbook wb = new XSSFWorkbook(spreadsheetIS);
@@ -486,8 +481,7 @@ public class RequestExtractor {
                                     }
                                 }
 
-                                //if the end user's password needs to be reset then we need to create it before the transaction block
-                                //starts
+                                //if the end user's password needs to be reset then we need to create it before the transaction block starts
                                 if (r.isResetPassword()) {
                                     username = da.GetUsernameByTimsInternalID(r.getTimsInternalID());
                                     r.setUsername(username);
@@ -532,19 +526,18 @@ public class RequestExtractor {
 
                                 if (r.isEditExistingAccount()) {
                                     if (r.getTimsInternalID().equals("") || r.getTimsInternalID() == null){
-                                        //System.out.println("-- No TIMS internal ID was provided. Manifest now contains a request to the theatre administrator to check and resend the user registration request");
                                         man.setUsername("-");
                                         man.setPassword("-");
                                         man.setDetail("Could not process TIMS registration request for " + r.getForename() + " " + r.getSurname().toUpperCase() + ".\nPlease resend with a TIMS internal ID when requesting to edit an existing user");
                                     }
                                     else {
-                                        //25-05-15 HS - Retrieve TIMS username for user from database
                                         r.setUsername(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
                                         gen.EditTimsStaffDetails();
                                         if (!r.getProfession_code().equals("ADMIN")) {
                                             gen.UpdateStaffRoles();                                            
                                             gen.UpdateStaffLocationDropdown();
                                         }
+
                                         //will only add/update consultant grade if request is for a doctor. Validation rule
                                         if (r.isDoctor()) {
                                             gen.UpdateDoctorSpecialty();
@@ -555,7 +548,6 @@ public class RequestExtractor {
 
                                         //only generate SQL if a username has been found
                                         if (r.getUsername() != "") {
-                                            //13-05-15 HS - Update staff location access information
                                             gen.UpdateStaffLocationAccess(r.getUsername());
 
                                             if (!r.getPasswordPrivilage().equals(PASSWORD_PRIVILAGE.NONE)) {
@@ -571,11 +563,8 @@ public class RequestExtractor {
                                     gen.AddAccountPrivilage(r.getUsername());
                                 }
 
-                                // Removing an account - doesn't seem to work as hoped. Plus theatres very rarely retire users from TIMS.
-                                // A better solution would be to 
                                 if (r.isRemoveExistingAccount()) {
                                     if (r.getTimsInternalID().equals("") || r.getTimsInternalID() == null){
-                                        //System.out.println("-- No TIMS internal ID was provided. Manifest now contains a request to the theatre administrator to check and resend the user registration request");
                                         man.setUsername("-");
                                         man.setPassword("-");
                                         man.setDetail("Could not process TIMS registration request to remove " + r.getForename() + " " + r.getSurname().toUpperCase() + ".\nPlease resend with a TIMS internal ID when requesting to edit an existing user");
@@ -605,7 +594,6 @@ public class RequestExtractor {
                                 }
 
                                 if (r.getRequestAction() == REQUEST_ACTION.REACTIVATEACCESS){
-                                    //r.setUsername(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
                                     gen.EditTimsStaffDetails();
                                     gen.ReactivateTimsStaffSysuser();
                                     gen.ReactivateSQLServerAccount(r.getUsername());
@@ -670,8 +658,6 @@ public class RequestExtractor {
         nf.setGroupingUsed(false);
 
         //check that the content of the first cell is blank.
-
-
         String requestCodeCellValue = (row.getCell(COLUMN_HEADERS.REQUEST_CODE.ordinal()).getStringCellValue());
         if (requestCodeCellValue.equals(REQUEST_ACTION.ADDUSER.toString())) {
             request.setRequestAction(REQUEST_ACTION.ADDUSER);
@@ -710,11 +696,9 @@ public class RequestExtractor {
 
         if (request.getRequestAction().equals(REQUEST_ACTION.NONE)) {request = null; }
         else {
-            //
             request.setProfession_code(row.getCell(COLUMN_HEADERS.PROFESSION_CODE.ordinal()).getStringCellValue());
 
             //fixme - non theatre nurses are considered by TIMS as ADMIN and won't appear on TIMS / theatre nurses are considered as NURSE
-            //fix should be put in on registration form
             if (request.getProfession_code().equals("NURSE")){
                 request.setProfession_code("ADMIN");
             } else if (request.getProfession_code().equals("NURSETH")){
@@ -754,7 +738,7 @@ public class RequestExtractor {
             request.setStartDate(startDate);
 
             Cell finishDateCell = row.getCell(COLUMN_HEADERS.FINISH_DATE.ordinal());
-            String finishDate = null;//new SimpleDateFormat("dd-MMM-yyyy").format(new Date());
+            String finishDate = null;
             if (finishDateCell.getCellType() != Cell.CELL_TYPE_BLANK){
                 finishDate = new SimpleDateFormat("dd-MMM-yyyy").format(finishDateCell.getDateCellValue());
             }
@@ -768,7 +752,6 @@ public class RequestExtractor {
                     request.setIsConsultant(false);
                 }
             }
-
 
             Cell surgeonProfessionCell = row.getCell(COLUMN_HEADERS.SURGEON.ordinal());
             if ((!surgeonProfessionCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
@@ -848,24 +831,6 @@ public class RequestExtractor {
             }
         }
 
-        /*//validation of the read in data
-        if (request.getRequestAction() != REQUEST_ACTION.NONE) {
-            //valdation of data provided
-            if (!request.basicInfoProvided()) {
-                System.out.println("...basic staff details not provided [FAIL]");
-                request = null;
-            } else {
-                //more in depth checks
-                if (request.getProfession_code().equals("NONE")) {
-                    System.out.println("...no profession code provided [FAIL]");
-                }
-
-                if (request.getLocationCollection().isEmpty()) {
-                    System.out.println("...no locations selected for user [FAIL]");
-                }
-                request = null;
-            }
-        }*/
         return request;
     }
 
