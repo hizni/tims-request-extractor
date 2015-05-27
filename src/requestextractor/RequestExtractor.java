@@ -114,7 +114,7 @@ public class RequestExtractor {
                         String files = listOfFiles[i].getName();
                         if (files.endsWith(".xlsx") || files.endsWith(".XLSX")) {
                             File currentFile = listOfFiles[i];
-                            currentFile.delete(); //removes this file from the original source location
+                            //currentFile.delete(); //removes this file from the original source location
                         }
                     }
                 }
@@ -221,11 +221,10 @@ public class RequestExtractor {
                                     default:
                                         //left empty on purpose
                                         break;
-                                };
+                                }
                             }
                             currentRow++;
                         }
-                        
                     }
                     fos = new FileOutputStream(System.getProperty("user.dir") + "\\files\\output\\requestReport\\timsRequests_" + currentLocation + "_" + currentDate + ".docx");
                     doc.write(fos);
@@ -279,18 +278,16 @@ public class RequestExtractor {
     private static boolean processSpreadsheet(File inputSpreadsheet, File outputScript) throws Exception {
         FileInputStream spreadsheetIS = null;
         FileOutputStream scriptOS = null;
-//        FileOutputStream manifestOS = null;
+//      FileOutputStream manifestOS = null;
 
         boolean success = true;
         try {
             spreadsheetIS = new FileInputStream(inputSpreadsheet);
-            scriptOS = new FileOutputStream(outputScript, true);
             //manifestOS = new FileOutputStream(outputManifest);
 
             //read in TIMS request file
             //PrintStream scriptOut = new PrintStream(scriptOS);
             //PrintStream manifestOut = new PrintStream(manifestOS);
-
 
             //if xlsx file Office 2007+
             XSSFWorkbook wb = new XSSFWorkbook(spreadsheetIS);
@@ -325,7 +322,7 @@ public class RequestExtractor {
 
                     if (cellValue == Cell.CELL_TYPE_STRING) {
                         //to check if the spreadsheet being looked at is correct. Version info is held in cell A1 of spreadsheet
-                        if (cell.getStringCellValue().contains("VERSION4")){
+                        if (cell.getStringCellValue().contains("VERSION4") || cell.getStringCellValue().contains("VERSION5")){
                             System.out.println("...version good [OK]");
                             correctVersion = true;
                         }
@@ -334,17 +331,6 @@ public class RequestExtractor {
                         if (correctVersion) {
                             if (cell.getStringCellValue().toUpperCase().contains("HEADER")) {
                                 headerFound = true;
-
-                                //todo - removed need for checking if form unchanged. Locked form at Excel level
-                                /*if (checkFormUnchanged(row)) {
-                                } else {
-                                    //System.setOut(manifestOut);
-                                    //System.out.print(" requestextractor.Request form is NOT correct. Stopping processing of this file: " + inputSpreadsheet.getName());
-                                    System.out.println("...form has been modified. [FAIL]");
-                                    success = false;
-                                    headerFound = false;
-                                    break;
-                                }*/
                             } else if (cell.getStringCellValue().toUpperCase().contains("SENDER")) {
                                 requestLocation = row.getCell(1).getStringCellValue();
                                 if (requestLocation.startsWith("CH")) {
@@ -373,14 +359,26 @@ public class RequestExtractor {
                     }
                 } else {
                     if (headerFound && correctVersion) {
-                        //System.setOut(scriptOut);
+
                         Request r = populateRequestObject(row);  //shreds request row into Request object
+
                         if ((r != null) && (!r.getRequestAction().equals(REQUEST_ACTION.NONE.toString()))) { //check will only consider rows that contain data. Validation rules defined in Request class
 
                             //creates a RequestReport object for each row. Also performs a check against the database for existing records
                             RequestReport man = new RequestReport(r.getRequestAction(), r, da);
+
+                            if (!man.isGenerateSQL()){
+                                man.setUsername("");
+                                man.setPassword("");
+                                requestListWithRequestingLocation.put(requestingLocation, man);
+                            }
                             if (man.isGenerateSQL()) { //flag set to true if ok to proceed with SQL script generation. All outcomes of this check are held in manifest
-                                
+
+                                //only initialse the FileOutputStream for the SQL Script file only if SQL is required to be generated
+                                if (scriptOS == null) {
+                                    scriptOS = new FileOutputStream(outputScript, true);
+                                }
+
                                 //creating the SQL script
                                 GenerateSQL gen = new GenerateSQL(r, da, outputScript);
                                 String username = "";
@@ -389,6 +387,31 @@ public class RequestExtractor {
                                 //These operations are completed using SYSTEM STORED PROCEDURES, and do not seem to work well within 
                                 //transaction blocks. So the SQL Server account will be created first, and then it will be related to the
                                 //TIMS account
+
+                                //todo - possibly change this code to made use of switch-case ratheer than sequence of IF statements
+                                /*switch (r.getRequestAction()){
+                                    case NONE:
+                                        break;
+                                    case ADDUSER:
+                                        break;
+                                    case ADDUSERACCESS:
+                                        break;
+                                    case AMEND:
+                                        break;
+                                    case GRANTEXISTACCESS:
+                                        break;
+                                    case REACTIVATEACCESS:
+                                        break;
+                                    case RESETPWD:
+                                        break;
+                                    case CHANGEACCESS:
+                                        break;
+                                    case REMOVEUSER:
+                                        break;
+                                    case REMOVEACCESS:
+                                        break;
+                                } */
+
                                 if (r.isNewPasswordNeeded()) {
                                     if (r.isEditExistingAccount()) {
                                         if(r.getTimsInternalID() == null || r.getTimsInternalID().equals("")){
@@ -425,7 +448,6 @@ public class RequestExtractor {
                                     }
                                     String password = RandomPasswordGenerator.generatePswd(8, 8, 2, 3, 0).toString();
 
-                                    //todo simplify logic badly badly written. After holidays!!
                                     if (r.isAddNewAccount() || r.isNewPasswordNeeded()) {
                                                                                
                                         //16-10-13 HS
@@ -438,14 +460,6 @@ public class RequestExtractor {
                                         man.setDetail("Adding user details to TIMS and setting up account to access");       
                                         man.setUsername(username);
                                         man.setPassword(password);
-
-                                        /*if (r.getTimsInternalID() != "" || r.getTimsInternalID() != null){
-                                            if (r.getTimsInternalID() == "0"){
-                                                gen.AddTimsStaffSysuser(username);
-                                            } else {
-                                                gen.AddTimsStaffSysuserToExistingAccount(username, r.getTimsInternalID());
-                                            }
-                                        }*/
                                     }
 
 
@@ -476,6 +490,7 @@ public class RequestExtractor {
                                 //starts
                                 if (r.isResetPassword()) {
                                     username = da.GetUsernameByTimsInternalID(r.getTimsInternalID());
+                                    r.setUsername(username);
                                     if (!username.equals("") || !username.equals(null)) {
                                         String password = RandomPasswordGenerator.generatePswd(8, 8, 2, 3, 0).toString();
                                         //String usernameDetails = "Resetting password. Username: " + username + "; Password: " + password;
@@ -523,20 +538,28 @@ public class RequestExtractor {
                                         man.setDetail("Could not process TIMS registration request for " + r.getForename() + " " + r.getSurname().toUpperCase() + ".\nPlease resend with a TIMS internal ID when requesting to edit an existing user");
                                     }
                                     else {
+                                        //25-05-15 HS - Retrieve TIMS username for user from database
+                                        r.setUsername(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
                                         gen.EditTimsStaffDetails();
                                         if (!r.getProfession_code().equals("ADMIN")) {
                                             gen.UpdateStaffRoles();                                            
                                             gen.UpdateStaffLocationDropdown();
                                         }
-
-                                        //13-05-15 HS - Update staff location access information
-                                        gen.UpdateStaffLocationAccess(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
-                                        
                                         //will only add/update consultant grade if request is for a doctor. Validation rule
                                         if (r.isDoctor()) {
                                             gen.UpdateDoctorSpecialty();
                                             if (r.isConsultant()) {
                                                 gen.UpdateConsultantGrade();
+                                            }
+                                        }
+
+                                        //only generate SQL if a username has been found
+                                        if (r.getUsername() != "") {
+                                            //13-05-15 HS - Update staff location access information
+                                            gen.UpdateStaffLocationAccess(r.getUsername());
+
+                                            if (!r.getPasswordPrivilage().equals(PASSWORD_PRIVILAGE.NONE)) {
+                                                gen.UpdateAccountPrivilage(r.getUsername());
                                             }
                                         }
                                     }
@@ -545,6 +568,7 @@ public class RequestExtractor {
                                 if (r.getRequestAction().equals(REQUEST_ACTION.GRANTEXISTACCESS)){
                                     gen.AddTimsStaffSysuserToExistingAccount(r.getUsername(), r.getTimsInternalID());
                                     gen.AddStaffLocationAccess(r.getUsername());
+                                    gen.AddAccountPrivilage(r.getUsername());
                                 }
 
                                 // Removing an account - doesn't seem to work as hoped. Plus theatres very rarely retire users from TIMS.
@@ -573,6 +597,19 @@ public class RequestExtractor {
                                         gen.RetireStaffRoles();
                                     } 
                                 }
+
+                                if (r.getRequestAction() == REQUEST_ACTION.REMOVEACCESS){
+                                    r.setUsername(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
+                                    gen.RetireTimsStaffSysuser();
+                                    gen.RetireSQLServerAccount(r.getUsername());
+                                }
+
+                                if (r.getRequestAction() == REQUEST_ACTION.REACTIVATEACCESS){
+                                    //r.setUsername(da.GetUsernameByTimsInternalID(r.getTimsInternalID()));
+                                    gen.EditTimsStaffDetails();
+                                    gen.ReactivateTimsStaffSysuser();
+                                    gen.ReactivateSQLServerAccount(r.getUsername());
+                                }
                                 gen.EndTransaction();
                                 requestListWithRequestingLocation.put(requestingLocation, man);
                             }
@@ -591,10 +628,16 @@ public class RequestExtractor {
         }
         finally {
             try {
-                
+
+                //if outputStream object has been initialised then flush and close it. This will cause a Sql script file to be closed
+                if (scriptOS != null){
+                    scriptOS.flush();
+                    scriptOS.close();
+                }
+
                 //closing file streams
                 spreadsheetIS.close();
-                scriptOS.close();
+
                 
                 
             } catch (IOException ex) {
@@ -657,6 +700,9 @@ public class RequestExtractor {
             request.setResetPassword(true);
         } else if (requestCodeCellValue.equals(REQUEST_ACTION.NONE.toString())) {
             request.setRequestAction(REQUEST_ACTION.NONE);
+        } else if (requestCodeCellValue.equals(REQUEST_ACTION.REACTIVATEACCESS.toString())) {
+            request.setRequestAction(REQUEST_ACTION.REACTIVATEACCESS);
+            request.setResetPassword(true);
         } else {
             System.out.println("....unknown request action selected. [FAIL]");
             request.setRequestAction(REQUEST_ACTION.NONE);
@@ -714,14 +760,15 @@ public class RequestExtractor {
             }
             request.setEndDate(finishDate);
 
-            if (request.getProfession_code().equals("DOCT")){
-                if (row.getCell(COLUMN_HEADERS.CONSULTANT.ordinal()).getStringCellValue() == null || row.getCell(COLUMN_HEADERS.CONSULTANT.ordinal()).getStringCellValue() == "N" )
+            if (request.getProfession_code().equals("DOCT")) {
+                String s = row.getCell(COLUMN_HEADERS.CONSULTANT.ordinal()).getStringCellValue().toUpperCase();
+                if (s.equals("Y")) {
                     request.setIsConsultant(true);
-                else
+                } else {
                     request.setIsConsultant(false);
-            }else{
-                request.setIsConsultant(false);
+                }
             }
+
 
             Cell surgeonProfessionCell = row.getCell(COLUMN_HEADERS.SURGEON.ordinal());
             if ((!surgeonProfessionCell.getStringCellValue().isEmpty()) && (!request.getProfession_code().equals("ADMIN"))) {
@@ -828,6 +875,7 @@ public class RequestExtractor {
         ADDUSERACCESS,
         AMEND,
         GRANTEXISTACCESS,
+        REACTIVATEACCESS,
         RESETPWD,
         CHANGEACCESS,
         REMOVEUSER,
