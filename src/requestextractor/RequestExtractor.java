@@ -50,7 +50,6 @@ public class RequestExtractor {
 
     static FormulaEvaluator evaluator = null;
 
-    
     /*
      * @param args the command line arguments
      */
@@ -108,15 +107,13 @@ public class RequestExtractor {
                         String files = listOfFiles[i].getName();
                         if (files.endsWith(".xlsx") || files.endsWith(".XLSX")) {
                             File currentFile = listOfFiles[i];
-                            //currentFile.delete(); //removes this file from the original source location
+                            currentFile.delete();
                         }
                     }
                 }
                 if (numberOfEncounteredFiles == 0){
                     System.out.println("Nothing to do! No TIMS request files encountered");
                 }
-
-
             }
         } catch (IOException ioEx) {
             Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ioEx);
