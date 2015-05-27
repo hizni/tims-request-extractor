@@ -61,7 +61,6 @@ public class RequestExtractor {
             File inputDirectory = new File(System.getProperty("user.dir") + "\\files\\requests\\");
             String outputDirectory = System.getProperty("user.dir") + "\\files\\output\\";
 
-            
             if (!inputDirectory.exists()){
                 System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("Looking for: " + System.getProperty("user.dir") + "\\files\\requests\\" );
@@ -128,8 +127,6 @@ public class RequestExtractor {
         POIFSFileSystem fs = null;
         FileOutputStream fos = null;
         try {
-            
-
             //XWPFTable table = (XWPFTable) tabIter.next();
             //XWPFTableRow row = table.getRow(0);
             //XWPFTableCell cell = row.getCell(0);              
