@@ -17,10 +17,12 @@ public class DataAccess {
     private Statement stmt = null;
     public DataAccess() {
         try {
+            //todo put TIMS db credentials into a property file
             String userName = "tims";
             String password = "buckingham";
 
-            String url = "jdbc:jtds:sqlserver://oxnettims01:1433/theatre_prod";
+            //fixme used explicit IP address of oxnettims01 instead of DNS entry since did not work when working over VPN
+            String url = "jdbc:jtds:sqlserver://10.134.107.32:1433/theatre_prod";
             Class.forName("net.sourceforge.jtds.jdbc.Driver");
             conn = DriverManager.getConnection(url, userName, password);
         } catch (SQLException ex) {
@@ -300,8 +302,7 @@ public class DataAccess {
     public String GetUsernameByTimsInternalID(String timsID) {
         String retVal = "";
         try {
-            String sql = "select account_name from tims.staff_sysusers where staff_id = '" + timsID  + "'";
-            
+            String sql = "select account_name from tims.staff_sysusers where staff_id = " + timsID  + "";
             //System.out.println("SQL to be executed (name): " + sql);
             stmt = getConnection().createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = stmt.executeQuery(sql);           
