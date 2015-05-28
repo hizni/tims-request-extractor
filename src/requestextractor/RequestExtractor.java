@@ -56,17 +56,27 @@ public class RequestExtractor {
     public static void main(String[] args) {
         try 
         {
-            createDirectory(System.getProperty("user.dir") + "\\files\\requests\\");
-            createDirectory(System.getProperty("user.dir") + "\\files\\output\\");
+            File resourceDir = new File(System.getProperty("user.dir") + "\\files\\");
+            if (!resourceDir.exists()){
+                System.out.println("The directory that should hold the resource files \\files does not exist.");
+                System.out.println("Creating the required directory structure...");
+                createDirectory(System.getProperty("user.dir") + "\\files\\requests\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\output\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\output\\sql\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\output\\requestReport\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\done\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\error\\");
+                createDirectory(System.getProperty("user.dir") + "\\files\\resources\\");
+            }
+
             File inputDirectory = new File(System.getProperty("user.dir") + "\\files\\requests\\");
             String outputDirectory = System.getProperty("user.dir") + "\\files\\output\\";
 
-            if (!inputDirectory.exists()){
+            /*if (!inputDirectory.exists()){
                 System.out.println("The directory that should hold the requests \\requests does not exist");
                 System.out.println("Looking for: " + System.getProperty("user.dir") + "\\files\\requests\\" );
             }
-            else {
-                createDirectory(System.getProperty("user.dir") + "\\files\\sql\\");
+            else { */
                 File sqlOutputFile = new File(outputDirectory + "\\sql\\" + currentDate + "_sqlScript.sql");
                 File[] listOfFiles = inputDirectory.listFiles();
                 List<File> successfulProcessedFiles = new ArrayList<File>();
@@ -84,11 +94,9 @@ public class RequestExtractor {
                             System.out.println("Processing: " + currentFile.getName() + "....");
                             if (processSpreadsheet(currentFile, sqlOutputFile)) {
                                 successfulProcessedFiles.add(currentFile);
-                                createDirectory(System.getProperty("user.dir") + "\\files\\done\\");
                                 copyFile(currentFile,System.getProperty("user.dir") + "\\files\\done\\" + currentDate);
                             } else {
                                 erroredFiles.add(currentFile);
-                                createDirectory(System.getProperty("user.dir") + "\\files\\error\\");
                                 copyFile(currentFile,System.getProperty("user.dir") + "\\files\\error\\" + currentDate);
                                 RequestReport m = new RequestReport();
                                 m.setUsername("-");
@@ -113,7 +121,7 @@ public class RequestExtractor {
                 if (numberOfEncounteredFiles == 0){
                     System.out.println("Nothing to do! No TIMS request files encountered");
                 }
-            }
+            //}
         } catch (IOException ioEx) {
             Logger.getLogger(RequestExtractor.class.getName()).log(Level.SEVERE, null, ioEx);
         } catch (Exception ex) {
@@ -122,7 +130,7 @@ public class RequestExtractor {
     }
 
     private static void CreateRequestReportDocument(ListMultimap<LOCATIONS, RequestReport> requestReportListWithRequestingLocation) {
-        String fileName = System.getProperty("user.dir") + "\\resourceFiles\\timsRequestTemplate.docx";
+        String fileName = System.getProperty("user.dir") + "\\files\\resources\\timsRequestTemplate.docx";
 
         POIFSFileSystem fs = null;
         FileOutputStream fos = null;
